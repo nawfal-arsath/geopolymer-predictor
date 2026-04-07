@@ -322,7 +322,8 @@ def build_models():
 
 @st.cache_data
 def train_pipeline(df_json: str):
-    df = pd.read_json(df_json, orient="split")
+    from io import StringIO
+    df = pd.read_json(StringIO(df_json), orient="split")
 
     TARGET = "Compression_28d"
     drop_cols = [TARGET, "_dataset"] if "_dataset" in df.columns else [TARGET]
