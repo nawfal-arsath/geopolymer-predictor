@@ -783,7 +783,7 @@ with tab3:
         ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.003,
                 f"{v:.4f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
     ax.set_ylabel("R² Score", fontsize=11)
-    ax.set_title("R² Score — All 5 Models  (⭐ Gold = Best)", fontsize=12, fontweight="bold")
+    ax.set_title("R²", fontsize=12, fontweight="bold")
     ax.set_ylim(min(vals) * 0.97, 1.01)
     ax.axhline(max(vals), color="#fbbf24", linestyle="--", linewidth=1.4, alpha=0.6, label=f"Best: {max(vals):.4f}")
     ax.legend(fontsize=9); ax.grid(axis="y", alpha=0.4)
@@ -799,7 +799,7 @@ with tab3:
         ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.05,
                 f"{v:.3f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
     ax.set_ylabel("MAE (MPa)", fontsize=11)
-    ax.set_title("MAE — All 5 Models  (⭐ Gold = Best / Lowest)", fontsize=12, fontweight="bold")
+    ax.set_title("MAE", fontsize=12, fontweight="bold")
     ax.axhline(min(vals), color="#fbbf24", linestyle="--", linewidth=1.4, alpha=0.6, label=f"Best: {min(vals):.3f} MPa")
     ax.legend(fontsize=9); ax.grid(axis="y", alpha=0.4)
     plt.tight_layout(); st.pyplot(fig); plt.close()
@@ -814,7 +814,7 @@ with tab3:
         ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.05,
                 f"{v:.3f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
     ax.set_ylabel("RMSE (MPa)", fontsize=11)
-    ax.set_title("RMSE — All 5 Models  (⭐ Gold = Best / Lowest)", fontsize=12, fontweight="bold")
+    ax.set_title("RMSE", fontsize=12, fontweight="bold")
     ax.axhline(min(vals), color="#fbbf24", linestyle="--", linewidth=1.4, alpha=0.6, label=f"Best: {min(vals):.3f} MPa")
     ax.legend(fontsize=9); ax.grid(axis="y", alpha=0.4)
     plt.tight_layout(); st.pyplot(fig); plt.close()
@@ -832,8 +832,7 @@ with tab3:
         ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.005,
                 f"{v:.4f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
     ax.set_ylabel("CV R² Mean", fontsize=11)
-    ax.set_title("CV R² Mean ± Std — All 5 Models  (⭐ Gold = Best)\nError bars = Std Dev across 5 folds",
-                 fontsize=12, fontweight="bold")
+    ax.set_title("CV R² Mean", fontsize=12, fontweight="bold")
     ax.set_ylim(min(vals) * 0.97, 1.01)
     ax.axhline(max(vals), color="#fbbf24", linestyle="--", linewidth=1.4, alpha=0.6, label=f"Best: {max(vals):.4f}")
     ax.legend(fontsize=9); ax.grid(axis="y", alpha=0.4)
@@ -849,8 +848,7 @@ with tab3:
         ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.0003,
                 f"{v:.4f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
     ax.set_ylabel("CV R² Std Dev", fontsize=11)
-    ax.set_title("CV R² Std Dev — All 5 Models  (⭐ Gold = Most Stable / Lowest)",
-                 fontsize=12, fontweight="bold")
+    ax.set_title("CV R² Std Dev", fontsize=12, fontweight="bold")
     ax.axhline(min(vals), color="#fbbf24", linestyle="--", linewidth=1.4, alpha=0.6, label=f"Best: {min(vals):.4f}")
     ax.legend(fontsize=9); ax.grid(axis="y", alpha=0.4)
     plt.tight_layout(); st.pyplot(fig); plt.close()
