@@ -732,22 +732,7 @@ with tab2:
 with tab3:
     st.markdown('<div class="sec-header">Model Benchmarking & Performance</div>', unsafe_allow_html=True)
 
-    # ── ✅ REAL METRICS TABLE (copy these values into your chart artifact) ──
-    st.markdown("### 📋 Raw Metrics — Copy These into Your Chart")
-    st.info("👇 These are your **actual trained model values**. Copy them into the RAW object in the chart artifact.")
-    st.dataframe(p["results_df"], use_container_width=True)
-
-    # ── Download metrics as CSV ──
-    csv_metrics = p["results_df"].to_csv().encode("utf-8")
-    st.download_button(
-        label="⬇️ Download Metrics as CSV",
-        data=csv_metrics,
-        file_name="model_metrics.csv",
-        mime="text/csv",
-    )
-
-    st.markdown("---")
-
+    # ── Styled metrics table ──────────────────────────────────────────────────
     styled_df = p["results_df"].copy()
     styled_df.index.name = "Model"
     st.dataframe(
@@ -766,6 +751,178 @@ with tab3:
     CV R² = {p['results_df'].loc[best_name,'CV R² (mean)']:.4f} ± {p['results_df'].loc[best_name,'CV R² (std)']:.4f}
     </div>""", unsafe_allow_html=True)
 
+    st.markdown("---")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # PARAMETER-WISE GRAPHS — 5 individual + 1 overall
+    # ══════════════════════════════════════════════════════════════════════════
+    st.markdown('<div class="sec-header">📊 Parameter-wise Model Comparison Graphs</div>', unsafe_allow_html=True)
+
+    model_names_list = list(p["results_df"].index)
+    bar_colors       = ["#4f6ef7", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"]
+
+    PARAM_META = [
+        ("R²",           "R² Score",            "Higher is better",  True),
+        ("MAE",          "MAE (MPa)",            "Lower is better",   False),
+        ("RMSE",         "RMSE (MPa)",           "Lower is better",   False),
+        ("CV R² (mean)", "CV R² Mean",           "Higher is better",  True),
+        ("CV R² (std)",  "CV R² Std Dev",        "Lower is better",   False),
+    ]
+
+    def highlight_best(vals, higher_better):
+        best = max(vals) if higher_better else min(vals)
+        return ["#fbbf24" if abs(v - best) < 1e-6 else bar_colors[i] for i, v in enumerate(vals)]
+
+    # ── Graph 1: R² ──────────────────────────────────────────────────────────
+    st.markdown("#### Graph 1 — R² Score (Higher is Better)")
+    vals = [p["results_df"].loc[nm, "R²"] for nm in model_names_list]
+    clrs = highlight_best(vals, True)
+    fig, ax = plt.subplots(figsize=(10, 4))
+    bars = ax.bar(model_names_list, vals, color=clrs, edgecolor="#ffffff", linewidth=1.2, width=0.5)
+    for bar, v in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.003,
+                f"{v:.4f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
+    ax.set_ylabel("R² Score", fontsize=11)
+    ax.set_title("R² Score — All 5 Models  (⭐ Gold = Best)", fontsize=12, fontweight="bold")
+    ax.set_ylim(min(vals) * 0.97, 1.01)
+    ax.axhline(max(vals), color="#fbbf24", linestyle="--", linewidth=1.4, alpha=0.6, label=f"Best: {max(vals):.4f}")
+    ax.legend(fontsize=9); ax.grid(axis="y", alpha=0.4)
+    plt.tight_layout(); st.pyplot(fig); plt.close()
+
+    # ── Graph 2: MAE ─────────────────────────────────────────────────────────
+    st.markdown("#### Graph 2 — MAE — Mean Absolute Error (Lower is Better)")
+    vals = [p["results_df"].loc[nm, "MAE"] for nm in model_names_list]
+    clrs = highlight_best(vals, False)
+    fig, ax = plt.subplots(figsize=(10, 4))
+    bars = ax.bar(model_names_list, vals, color=clrs, edgecolor="#ffffff", linewidth=1.2, width=0.5)
+    for bar, v in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.05,
+                f"{v:.3f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
+    ax.set_ylabel("MAE (MPa)", fontsize=11)
+    ax.set_title("MAE — All 5 Models  (⭐ Gold = Best / Lowest)", fontsize=12, fontweight="bold")
+    ax.axhline(min(vals), color="#fbbf24", linestyle="--", linewidth=1.4, alpha=0.6, label=f"Best: {min(vals):.3f} MPa")
+    ax.legend(fontsize=9); ax.grid(axis="y", alpha=0.4)
+    plt.tight_layout(); st.pyplot(fig); plt.close()
+
+    # ── Graph 3: RMSE ────────────────────────────────────────────────────────
+    st.markdown("#### Graph 3 — RMSE — Root Mean Squared Error (Lower is Better)")
+    vals = [p["results_df"].loc[nm, "RMSE"] for nm in model_names_list]
+    clrs = highlight_best(vals, False)
+    fig, ax = plt.subplots(figsize=(10, 4))
+    bars = ax.bar(model_names_list, vals, color=clrs, edgecolor="#ffffff", linewidth=1.2, width=0.5)
+    for bar, v in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.05,
+                f"{v:.3f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
+    ax.set_ylabel("RMSE (MPa)", fontsize=11)
+    ax.set_title("RMSE — All 5 Models  (⭐ Gold = Best / Lowest)", fontsize=12, fontweight="bold")
+    ax.axhline(min(vals), color="#fbbf24", linestyle="--", linewidth=1.4, alpha=0.6, label=f"Best: {min(vals):.3f} MPa")
+    ax.legend(fontsize=9); ax.grid(axis="y", alpha=0.4)
+    plt.tight_layout(); st.pyplot(fig); plt.close()
+
+    # ── Graph 4: CV R² Mean ───────────────────────────────────────────────────
+    st.markdown("#### Graph 4 — CV R² Mean — Cross-Validation Score (Higher is Better)")
+    vals     = [p["results_df"].loc[nm, "CV R² (mean)"] for nm in model_names_list]
+    stds     = [p["results_df"].loc[nm, "CV R² (std)"]  for nm in model_names_list]
+    clrs     = highlight_best(vals, True)
+    fig, ax  = plt.subplots(figsize=(10, 4))
+    bars     = ax.bar(model_names_list, vals, color=clrs, edgecolor="#ffffff",
+                      linewidth=1.2, width=0.5, yerr=stds,
+                      error_kw=dict(ecolor="#1a1d27", capsize=5, capthick=1.5, elinewidth=1.5))
+    for bar, v in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.005,
+                f"{v:.4f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
+    ax.set_ylabel("CV R² Mean", fontsize=11)
+    ax.set_title("CV R² Mean ± Std — All 5 Models  (⭐ Gold = Best)\nError bars = Std Dev across 5 folds",
+                 fontsize=12, fontweight="bold")
+    ax.set_ylim(min(vals) * 0.97, 1.01)
+    ax.axhline(max(vals), color="#fbbf24", linestyle="--", linewidth=1.4, alpha=0.6, label=f"Best: {max(vals):.4f}")
+    ax.legend(fontsize=9); ax.grid(axis="y", alpha=0.4)
+    plt.tight_layout(); st.pyplot(fig); plt.close()
+
+    # ── Graph 5: CV R² Std ────────────────────────────────────────────────────
+    st.markdown("#### Graph 5 — CV R² Std Dev — Model Stability (Lower is Better)")
+    vals = [p["results_df"].loc[nm, "CV R² (std)"] for nm in model_names_list]
+    clrs = highlight_best(vals, False)
+    fig, ax = plt.subplots(figsize=(10, 4))
+    bars = ax.bar(model_names_list, vals, color=clrs, edgecolor="#ffffff", linewidth=1.2, width=0.5)
+    for bar, v in zip(bars, vals):
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.0003,
+                f"{v:.4f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
+    ax.set_ylabel("CV R² Std Dev", fontsize=11)
+    ax.set_title("CV R² Std Dev — All 5 Models  (⭐ Gold = Most Stable / Lowest)",
+                 fontsize=12, fontweight="bold")
+    ax.axhline(min(vals), color="#fbbf24", linestyle="--", linewidth=1.4, alpha=0.6, label=f"Best: {min(vals):.4f}")
+    ax.legend(fontsize=9); ax.grid(axis="y", alpha=0.4)
+    plt.tight_layout(); st.pyplot(fig); plt.close()
+
+    # ── Graph 6: OVERALL COMPARISON (grouped bar) ─────────────────────────────
+    st.markdown("#### Graph 6 — Overall Comparison — All Parameters Together")
+
+    # Normalise each metric to 0–1 where 1 = best model
+    res = p["results_df"].copy()
+    norm_df = pd.DataFrame(index=res.index)
+    for col, higher in [("R²", True), ("MAE", False), ("RMSE", False),
+                         ("CV R² (mean)", True), ("CV R² (std)", False)]:
+        mn, mx = res[col].min(), res[col].max()
+        if mx == mn:
+            norm_df[col] = 1.0
+        else:
+            norm_df[col] = (res[col] - mn) / (mx - mn) if higher else (mx - res[col]) / (mx - mn)
+
+    overall_score = norm_df.mean(axis=1).sort_values(ascending=False)
+
+    # Grouped bar: each metric as a group, 5 model bars inside
+    metric_cols  = ["R²", "MAE", "RMSE", "CV R² (mean)", "CV R² (std)"]
+    x            = np.arange(len(metric_cols))
+    width        = 0.15
+    fig, ax      = plt.subplots(figsize=(13, 5))
+    for i, (nm, clr) in enumerate(zip(model_names_list, bar_colors)):
+        offsets = (i - 2) * width
+        norm_vals = [norm_df.loc[nm, col] for col in metric_cols]
+        bars = ax.bar(x + offsets, norm_vals, width, label=nm, color=clr,
+                      edgecolor="#ffffff", linewidth=0.8, alpha=0.88)
+        for bar, v in zip(bars, norm_vals):
+            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+                    f"{v:.2f}", ha="center", va="bottom", fontsize=7, fontweight="bold")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(["R² Score", "MAE", "RMSE", "CV R² Mean", "CV R² Std"], fontsize=11)
+    ax.set_ylabel("Normalised Score (0 = worst, 1 = best)", fontsize=10)
+    ax.set_title("Overall Comparison — All 5 Parameters × All 5 Models\n(Normalised so 1.0 always = best model per metric)",
+                 fontsize=12, fontweight="bold")
+    ax.set_ylim(0, 1.18)
+    ax.legend(loc="upper right", fontsize=9, ncol=3)
+    ax.grid(axis="y", alpha=0.4)
+    plt.tight_layout(); st.pyplot(fig); plt.close()
+
+    # ── Overall Ranking ───────────────────────────────────────────────────────
+    st.markdown("#### Overall Model Ranking (Average Normalised Score)")
+    rank_c1, rank_c2 = st.columns([1, 2])
+    with rank_c1:
+        rank_df = overall_score.reset_index()
+        rank_df.columns = ["Model", "Overall Score (0-1)"]
+        rank_df.index   = range(1, len(rank_df) + 1)
+        rank_df.index.name = "Rank"
+        rank_df["Overall Score (0-1)"] = rank_df["Overall Score (0-1)"].round(4)
+        st.dataframe(rank_df, use_container_width=True)
+
+    with rank_c2:
+        fig, ax = plt.subplots(figsize=(7, 3.5))
+        clrs_ranked = [bar_colors[model_names_list.index(nm)] for nm in overall_score.index]
+        bars = ax.barh(overall_score.index[::-1], overall_score.values[::-1],
+                       color=clrs_ranked[::-1], edgecolor="#ffffff", linewidth=1)
+        for bar, v in zip(bars, overall_score.values[::-1]):
+            ax.text(v + 0.005, bar.get_y() + bar.get_height()/2,
+                    f"{v:.4f}", va="center", fontsize=10, fontweight="bold")
+        ax.set_xlabel("Overall Normalised Score", fontsize=10)
+        ax.set_title("Model Ranking — Overall Score", fontsize=11, fontweight="bold")
+        ax.set_xlim(0, 1.15)
+        ax.grid(axis="x", alpha=0.4)
+        plt.tight_layout(); st.pyplot(fig); plt.close()
+
+    st.markdown("---")
+
+    # ── Actual vs Predicted ───────────────────────────────────────────────────
     st.markdown("**Actual vs Predicted — All Models**")
     fig, axes = plt.subplots(1, len(p["trained"]), figsize=(16, 3.8))
     pal_avp = sns.color_palette("tab10", len(p["trained"]))
@@ -790,14 +947,12 @@ with tab3:
         y_pred_sel = selected_model.predict(p["X_test"])
         residuals  = p["y_test"].values - y_pred_sel
         fig, axes  = plt.subplots(1, 2, figsize=(9, 3.5))
-
         axes[0].scatter(y_pred_sel, residuals, alpha=0.7,
                         c=residuals, cmap="RdYlGn", edgecolors="none", s=40)
         axes[0].axhline(0, color="#1a1d27", linewidth=1.5, linestyle="--")
         axes[0].set_xlabel("Predicted (MPa)"); axes[0].set_ylabel("Residual")
         axes[0].set_title("Residuals vs Predicted", fontsize=9, fontweight="bold")
         axes[0].grid(True, alpha=0.4)
-
         mu_, sd_ = residuals.mean(), residuals.std()
         axes[1].hist(residuals, bins=14, color=PALETTE[0], edgecolor="none", density=True, alpha=0.75)
         xr_r = np.linspace(residuals.min(), residuals.max(), 200)
