@@ -257,7 +257,6 @@ def load_dataset():
         st.error("❌ CIVIL_FINAL_DATASET.xlsx not found. Place it in the same folder as this script.")
         st.stop()
 
-    # Ensure correct dtypes
     for col in FEATURE_COLS + [TARGET_COL]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
@@ -648,7 +647,6 @@ with tab1:
                     )
                 axes_flat[ax_i].set_title(FEATURE_LABELS[key], fontsize=9, fontweight="bold")
                 axes_flat[ax_i].set_ylabel("Value"); axes_flat[ax_i].grid(axis="y", alpha=0.4)
-            # hide last empty panel
             axes_flat[-1].set_visible(False)
             plt.suptitle(f"Recommended Mix vs Dataset Average  (Target: {target_strength} MPa)",
                          fontsize=11, fontweight="bold")
@@ -693,7 +691,6 @@ with tab2:
         ax.legend(fontsize=9); ax.grid(True, alpha=0.4)
         plt.tight_layout(); st.pyplot(fig); plt.close()
 
-    # Scatter: each feature vs strength
     st.markdown("**Feature vs Compressive Strength**")
     scatter_feats = [f for f in FEATURE_COLS if f != "Age_days"]
     sc_cols = st.columns(len(scatter_feats))
@@ -716,7 +713,6 @@ with tab2:
         plt.tight_layout()
         sc_cols[i].pyplot(fig); plt.close()
 
-    # Boxplot: strength by curing temp bins
     st.markdown("**Strength by Curing Temperature Band**")
     df_tmp = df.copy()
     df_tmp["Temp_band"] = pd.cut(df_tmp["Curing_Temp_C"], bins=4,
@@ -736,6 +732,22 @@ with tab2:
 with tab3:
     st.markdown('<div class="sec-header">Model Benchmarking & Performance</div>', unsafe_allow_html=True)
 
+    # ── ✅ REAL METRICS TABLE (copy these values into your chart artifact) ──
+    st.markdown("### 📋 Raw Metrics — Copy These into Your Chart")
+    st.info("👇 These are your **actual trained model values**. Copy them into the RAW object in the chart artifact.")
+    st.dataframe(p["results_df"], use_container_width=True)
+
+    # ── Download metrics as CSV ──
+    csv_metrics = p["results_df"].to_csv().encode("utf-8")
+    st.download_button(
+        label="⬇️ Download Metrics as CSV",
+        data=csv_metrics,
+        file_name="model_metrics.csv",
+        mime="text/csv",
+    )
+
+    st.markdown("---")
+
     styled_df = p["results_df"].copy()
     styled_df.index.name = "Model"
     st.dataframe(
@@ -754,7 +766,6 @@ with tab3:
     CV R² = {p['results_df'].loc[best_name,'CV R² (mean)']:.4f} ± {p['results_df'].loc[best_name,'CV R² (std)']:.4f}
     </div>""", unsafe_allow_html=True)
 
-    # Actual vs Predicted — all models
     st.markdown("**Actual vs Predicted — All Models**")
     fig, axes = plt.subplots(1, len(p["trained"]), figsize=(16, 3.8))
     pal_avp = sns.color_palette("tab10", len(p["trained"]))
@@ -773,7 +784,6 @@ with tab3:
     plt.suptitle("Actual vs Predicted – All Models", fontsize=11, fontweight="bold")
     plt.tight_layout(); st.pyplot(fig); plt.close()
 
-    # Residuals + Feature importances
     ra_c1, ra_c2 = st.columns(2)
     with ra_c1:
         st.markdown(f"**Residual Analysis — {selected_model_name}**")
